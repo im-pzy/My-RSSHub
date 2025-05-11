@@ -3,6 +3,7 @@ import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 import { getContent } from './utils';
+import InvalidParameterError from '@/errors/types/invalid-parameter';
 
 const map = new Map([
     ['tzgg', { title: '南京理工大学财务处 -- 通知公告', id: '/12432' }],
@@ -28,15 +29,15 @@ export const route: Route = {
     maintainers: ['MilkShakeYoung', 'jasongzy'],
     handler,
     description: `| 通知公告 | 办事流程 |
-  | -------- | -------- |
-  | tzgg     | bslc     |`,
+| -------- | -------- |
+| tzgg     | bslc     |`,
 };
 
 async function handler(ctx) {
     const type = ctx.req.param('type') ?? 'tzgg';
     const info = map.get(type);
     if (!info) {
-        throw new Error('invalid type');
+        throw new InvalidParameterError('invalid type');
     }
     const id = info.id;
     const siteUrl = host + id + '/list.htm';
@@ -48,14 +49,10 @@ async function handler(ctx) {
     return {
         title: info.title,
         link: siteUrl,
-        item:
-            list &&
-            list
-                .map((index, item) => ({
-                    title: $(item).find('a').attr('title').trim(),
-                    pubDate: timezone(parseDate($(item).find('span.news_meta').text(), 'YYYY-MM-DD'), +8),
-                    link: $(item).find('a').attr('href'),
-                }))
-                .get(),
+        item: list.toArray().map((item) => ({
+            title: $(item).find('a').attr('title').trim(),
+            pubDate: timezone(parseDate($(item).find('span.news_meta').text(), 'YYYY-MM-DD'), +8),
+            link: $(item).find('a').attr('href'),
+        })),
     };
 }

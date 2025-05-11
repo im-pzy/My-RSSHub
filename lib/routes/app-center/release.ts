@@ -1,12 +1,10 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 import MarkdownIt from 'markdown-it';
 
 export const route: Route = {
@@ -30,9 +28,9 @@ export const route: Route = {
     name: 'Release',
     maintainers: ['Rongronggg9'],
     handler,
-    description: `:::tip
+    description: `::: tip
   The parameters can be extracted from the Release page URL: \`https://install.appcenter.ms/users/:user/apps/:app/distribution_groups/:distribution_group\`
-  :::`,
+:::`,
 };
 
 async function handler(ctx) {

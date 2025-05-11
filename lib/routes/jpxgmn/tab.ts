@@ -1,7 +1,7 @@
 import { Route } from '@/types';
-import { originUrl, getArticleDesc } from './utils';
+import { getOriginUrl, getArticleDesc } from './utils';
 import cache from '@/utils/cache';
-import got from '@/utils/got';
+import ofetch from '@/utils/ofetch';
 import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
@@ -12,7 +12,7 @@ export const route: Route = {
     parameters: { tab: '分类，默认为`top`，包括`top`、`new`、`hot`，以及[源网站](http://www.jpxgmn.com/)所包含的其他相对路径，比如`Xiuren`、`XiaoYu`等' },
     radar: [
         {
-            source: ['www.12356782.xyz/:tab'],
+            source: ['mei5.vip/:tab'],
             target: '/:tab',
         },
     ],
@@ -24,10 +24,10 @@ export const route: Route = {
 async function handler(ctx) {
     const { tab = 'top' } = ctx.req.param();
     const isSpecial = ['new', 'top', 'hot'].includes(tab);
-    const tabUrl = `${originUrl}/${tab}` + (isSpecial ? '.html' : '/');
-    const response = await got(tabUrl);
+    const tabUrl = `${await getOriginUrl()}/${tab}` + (isSpecial ? '.html' : '/');
+    const response = await ofetch.raw(tabUrl);
     const baseUrl = new URL(response.url).origin;
-    const $ = load(response.data);
+    const $ = load(response._data);
     const topTitle = $('div.toptip > a').get(1);
     let feedTitle = $('title').text();
     if (isSpecial) {

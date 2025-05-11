@@ -2,12 +2,12 @@ import got from '@/utils/got';
 import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
-export default async () => {
+const handler = async () => {
     const url = 'https://www.anquanke.com';
 
     const response = await got(`${url}/vul`);
     const $ = load(response.data);
-    const list = $('table>tbody>tr').get();
+    const list = $('table>tbody>tr').toArray();
 
     const items = list.map((i) => {
         const item = $(i);
@@ -32,3 +32,5 @@ export default async () => {
         item: items,
     };
 };
+
+export default handler;

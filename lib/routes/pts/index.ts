@@ -1,6 +1,4 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import { getSubPath } from '@/utils/common-utils';
 import cache from '@/utils/cache';
@@ -9,7 +7,7 @@ import { load } from 'cheerio';
 import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 
 export const route: Route = {
     path: '*',
@@ -29,7 +27,7 @@ async function handler(ctx) {
 
     const $ = load(response.data);
 
-    let items = $('h2 a')
+    let items = $('h1 a,h2 a')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30)
         .toArray()
         .map((item) => {

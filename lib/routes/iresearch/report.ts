@@ -1,11 +1,9 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -57,7 +55,7 @@ export const route: Route = {
 };
 
 async function handler(ctx) {
-    const limit = isNaN(Number.parseInt(ctx.req.query('limit'))) ? 20 : Number.parseInt(ctx.req.query('limit'));
+    const limit = Number.isNaN(Number.parseInt(ctx.req.query('limit'))) ? 20 : Number.parseInt(ctx.req.query('limit'));
     const apiUrl = `https://www.iresearch.com.cn/api/products/GetReportList?fee=0&date=&lastId=&pageSize=${limit}`;
     const pageUrl = 'https://www.iresearch.com.cn/m/report.shtml';
 

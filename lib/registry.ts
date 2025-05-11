@@ -1,16 +1,16 @@
 import type { Namespace, Route } from '@/types';
 import { directoryImport } from 'directory-import';
 import { Hono, type Handler } from 'hono';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { config } from '@/config';
 
 import index from '@/routes/index';
+import healthz from '@/routes/healthz';
 import robotstxt from '@/routes/robots.txt';
-import { namespace as testNamespace } from './routes/test/namespace';
-import { route as testRoute } from '@/routes/test/index';
+import metrics from '@/routes/metrics';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 
 let modules: Record<string, { route: Route } | { namespace: Namespace }> = {};
 let namespaces: Record<
@@ -26,19 +26,12 @@ let namespaces: Record<
 > = {};
 
 switch (process.env.NODE_ENV) {
-    case 'test':
-        modules = {
-            '/test/namespace.ts': {
-                namespace: testNamespace,
-            },
-            '/test/index.ts': {
-                route: testRoute,
-            },
-        };
-        break;
     case 'production':
-        // eslint-disable-next-line n/no-unpublished-require
-        namespaces = require('../assets/build/routes.json');
+        namespaces = (await import('../assets/build/routes.js')).default;
+        break;
+    case 'test':
+        // @ts-expect-error
+        namespaces = await import('../assets/build/routes.json');
         break;
     default:
         modules = directoryImport({
@@ -56,7 +49,7 @@ if (Object.keys(modules).length) {
             | {
                   namespace: Namespace;
               };
-        const namespace = module.split('/')[1];
+        const namespace = module.split(/[/\\]/)[1];
         if ('namespace' in content) {
             namespaces[namespace] = Object.assign(
                 {
@@ -76,13 +69,13 @@ if (Object.keys(modules).length) {
                 for (const path of content.route.path) {
                     namespaces[namespace].routes[path] = {
                         ...content.route,
-                        location: module.split('/').slice(2).join('/'),
+                        location: module.split(/[/\\]/).slice(2).join('/'),
                     };
                 }
             } else {
                 namespaces[namespace].routes[content.route.path] = {
                     ...content.route,
-                    location: module.split('/').slice(2).join('/'),
+                    location: module.split(/[/\\]/).slice(2).join('/'),
                 };
             }
         }
@@ -92,24 +85,71 @@ if (Object.keys(modules).length) {
 export { namespaces };
 
 const app = new Hono();
+const sortRoutes = (
+    routes: Record<
+        string,
+        Route & {
+            location: string;
+            module?: () => Promise<{ route: Route }>;
+        }
+    >
+) =>
+    Object.entries(routes).sort(([pathA], [pathB]) => {
+        const segmentsA = pathA.split('/');
+        const segmentsB = pathB.split('/');
+        const lenA = segmentsA.length;
+        const lenB = segmentsB.length;
+        const minLen = Math.min(lenA, lenB);
+
+        for (let i = 0; i < minLen; i++) {
+            const segmentA = segmentsA[i];
+            const segmentB = segmentsB[i];
+
+            // Literal segments have priority over parameter segments
+            if (segmentA.startsWith(':') !== segmentB.startsWith(':')) {
+                return segmentA.startsWith(':') ? 1 : -1;
+            }
+        }
+
+        return 0;
+    });
+
 for (const namespace in namespaces) {
     const subApp = app.basePath(`/${namespace}`);
-    for (const path in namespaces[namespace].routes) {
-        const wrapedHandler: Handler = async (ctx) => {
+
+    const namespaceData = namespaces[namespace];
+    if (!namespaceData || !namespaceData.routes) {
+        continue;
+    }
+
+    const sortedRoutes = sortRoutes(namespaceData.routes);
+
+    for (const [path, routeData] of sortedRoutes) {
+        const wrappedHandler: Handler = async (ctx) => {
             if (!ctx.get('data')) {
-                if (typeof namespaces[namespace].routes[path].handler !== 'function') {
-                    const { route } = await import(`./routes/${namespace}/${namespaces[namespace].routes[path].location}`);
-                    namespaces[namespace].routes[path].handler = route.handler;
+                if (typeof routeData.handler !== 'function') {
+                    if (process.env.NODE_ENV === 'test') {
+                        const { route } = await import(`./routes/${namespace}/${routeData.location}`);
+                        routeData.handler = route.handler;
+                    } else if (routeData.module) {
+                        const { route } = await routeData.module();
+                        routeData.handler = route.handler;
+                    }
                 }
-                ctx.set('data', await namespaces[namespace].routes[path].handler(ctx));
+                ctx.set('data', await routeData.handler(ctx));
             }
         };
-        subApp.get(path, wrapedHandler);
+        subApp.get(path, wrappedHandler);
     }
 }
 
 app.get('/', index);
+app.get('/healthz', healthz);
 app.get('/robots.txt', robotstxt);
+if (config.debugInfo) {
+    // Only enable tracing in debug mode
+    app.get('/metrics', metrics);
+}
 app.use(
     '/*',
     serveStatic({

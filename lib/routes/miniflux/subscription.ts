@@ -1,6 +1,7 @@
 import { Route } from '@/types';
 import got from '@/utils/got';
 import { config } from '@/config';
+import ConfigNotFoundError from '@/errors/types/config-not-found';
 
 export const route: Route = {
     path: '/subscription/:parameters?',
@@ -43,15 +44,15 @@ async function handler(ctx) {
     const token = config.miniflux.token;
 
     if (!token) {
-        throw new Error('This RSS feed is disabled due to its incorrect configuration: the token is missing.');
+        throw new ConfigNotFoundError('This RSS feed is disabled due to its incorrect configuration: the token is missing.');
     }
 
     function set(item) {
         if (item.search('=') === -1) {
             return '';
         }
-        const filter = item.substring(0, item.indexOf('='));
-        const option = item.substring(item.lastIndexOf('=') + 1);
+        const filter = item.slice(0, item.indexOf('='));
+        const option = item.slice(item.lastIndexOf('=') + 1);
         if (filter.search('categor') !== -1) {
             option.split(',').map((item) => categories.push(item.toString().toLowerCase()));
             return filter;

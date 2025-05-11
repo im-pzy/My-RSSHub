@@ -1,6 +1,4 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
@@ -8,7 +6,7 @@ import { load } from 'cheerio';
 import timezone from '@/utils/timezone';
 import { parseDate, parseRelativeDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 
 export const route: Route = {
     path: '/all/:id?',
@@ -32,9 +30,9 @@ export const route: Route = {
     name: '热帖',
     maintainers: ['nczitzk'],
     handler,
-    description: `:::tip
+    description: `::: tip
   更多热帖版面参见 [论坛](https://bbs.hupu.com)
-  :::`,
+:::`,
 };
 
 async function handler(ctx) {

@@ -1,6 +1,4 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
@@ -8,7 +6,7 @@ import { load } from 'cheerio';
 import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 
 export const route: Route = {
     path: ['/lc_report/:id?', '/report/:id?'],
@@ -27,8 +25,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 罗戈研究出品 | 物流报告       | 绿色双碳报告          |
-  | ------------ | -------------- | --------------------- |
-  | Report       | IndustryReport | GreenDualCarbonReport |`,
+| ------------ | -------------- | --------------------- |
+| Report       | IndustryReport | GreenDualCarbonReport |`,
 };
 
 async function handler(ctx) {

@@ -6,6 +6,7 @@ import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 import { finishArticleItem } from '@/utils/wechat-mp';
 import wait from '@/utils/wait';
+import RequestInProgressError from '@/errors/types/request-in-progress';
 
 const parsePage = ($item, hyperlinkSelector, timeSelector) => {
     const hyperlink = $item.find(hyperlinkSelector);
@@ -35,7 +36,7 @@ export const route: Route = {
 async function handler(ctx) {
     // !!! here we must use a lock to prevent other requests to break the anti-anti-crawler workarounds !!!
     if ((await cache.get('data258:lock', false)) === '1') {
-        throw new Error('Another request is in progress, please try again later.');
+        throw new RequestInProgressError('Another request is in progress, please try again later.');
     }
     // !!! here no need to acquire the lock, because the MP/category page has no crawler detection !!!
 
@@ -59,17 +60,17 @@ async function handler(ctx) {
         categoryPage && categoryPage.length
             ? $(categoryPage)
                   .find('li')
-                  .map((_, item) => parsePage($(item), 'h2 a', '.fly-list-info span'))
-                  .get() // got a category page
+                  .toArray()
+                  .map((item) => parsePage($(item), 'h2 a', '.fly-list-info span')) // got a category page
             : $('ul.jie-row li')
-                  .map((_, item) => parsePage($(item), 'a.jie-title', '.layui-hide-xs'))
-                  .get(); // got an MP page
+                  .toArray()
+                  .map((item) => parsePage($(item), 'a.jie-title', '.layui-hide-xs')); // got an MP page
 
     items = items.slice(0, limit); // limit to avoid being anti-crawled
 
     // !!! double-check !!!
     if ((await cache.get('data258:lock', false)) === '1') {
-        throw new Error('Another request is in progress, please try again later.');
+        throw new RequestInProgressError('Another request is in progress, please try again later.');
     } else {
         // !!! here we acquire the lock because the jump page has crawler detection !!!
         await cache.set('data258:lock', '1', 60);

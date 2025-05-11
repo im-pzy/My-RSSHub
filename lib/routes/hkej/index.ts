@@ -1,6 +1,4 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
@@ -8,7 +6,7 @@ import { load } from 'cheerio';
 import { parseDate, parseRelativeDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 import { CookieJar } from 'tough-cookie';
 
 const cookieJar = new CookieJar();
@@ -81,8 +79,8 @@ export const route: Route = {
     handler,
     url: 'hkej.com/',
     description: `| index    | stock    | hongkong | china    | international | property | current  |
-  | -------- | -------- | -------- | -------- | ------------- | -------- | -------- |
-  | 全部新闻 | 港股直击 | 香港财经 | 中国财经 | 国际财经      | 地产新闻 | 时事脉搏 |`,
+| -------- | -------- | -------- | -------- | ------------- | -------- | -------- |
+| 全部新闻 | 港股直击 | 香港财经 | 中国财经 | 国际财经      | 地产新闻 | 时事脉搏 |`,
 };
 
 async function handler(ctx) {
@@ -102,14 +100,14 @@ async function handler(ctx) {
     const $ = load(response.data);
 
     const list = $('h3.in_news_u_t a, h4.hkej_hl-news_topic_2014 a, div.hkej_toc_listingAll_news2_2014 h3 a, div.hkej_toc_cat_top_detail h3 a, div.allNews div.news h1 a, div#div_listingAll div.news2 h3 a')
-        .map((_, item) => {
+        .toArray()
+        .map((item) => {
             item = $(item);
             return {
                 title: item.text().trim(),
-                link: baseUrl + item.attr('href').substring(0, item.attr('href').lastIndexOf('/')),
+                link: baseUrl + item.attr('href').slice(0, item.attr('href').lastIndexOf('/')),
             };
-        })
-        .get();
+        });
 
     const renderArticleImg = (pics) =>
         art(path.join(__dirname, 'templates/articleImg.art'), {
@@ -144,15 +142,13 @@ async function handler(ctx) {
                     content('.hkej_sub_ex_article_nonsubscriber_ad_2014').remove();
 
                     // fix article image
-                    const articleImg = (content('div.hkej_detail_thumb_2014 td a').length ? content('div.hkej_detail_thumb_2014 td a') : content('div.thumb td a'))
-                        .map((_, e) => {
-                            e = $(e);
-                            return {
-                                href: e.attr('href'),
-                                title: e.attr('title'),
-                            };
-                        })
-                        .get();
+                    const articleImg = (content('div.hkej_detail_thumb_2014 td a').length ? content('div.hkej_detail_thumb_2014 td a') : content('div.thumb td a')).toArray().map((e) => {
+                        e = $(e);
+                        return {
+                            href: e.attr('href'),
+                            title: e.attr('title'),
+                        };
+                    });
 
                     const pubDate = content('p.info span.date').text().trim();
 
@@ -167,7 +163,7 @@ async function handler(ctx) {
             )
     );
 
-    return {
+    const ret = {
         title: `信報網站 - ${cat.title} - 信報網站 hkej.com`,
         link: baseUrl + cat.link,
         description: `信報網站(www.hkej.com)即時新聞${cat.name}，提供${cat.description}。`,
@@ -176,11 +172,8 @@ async function handler(ctx) {
     };
 
     ctx.set('json', {
-        title: `信報網站 - ${cat.title} - 信報網站 hkej.com`,
-        link: baseUrl + cat.link,
-        description: `信報網站(www.hkej.com)即時新聞${cat.name}，提供${cat.description}。`,
-        item: items,
-        language: 'zh-hk',
+        ...ret,
         cookieJar,
     });
+    return ret;
 }

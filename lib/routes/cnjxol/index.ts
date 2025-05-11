@@ -1,13 +1,12 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
+import InvalidParameterError from '@/errors/types/invalid-parameter';
 
 const categories = {
     jxrb: '嘉兴日报',
@@ -25,7 +24,7 @@ async function handler(ctx) {
     const category = ctx.req.param('category') ?? 'jxrb';
     const id = ctx.req.param('id');
     if (!Object.keys(categories).includes(category)) {
-        throw new Error('Invalid category');
+        throw new InvalidParameterError('Invalid category');
     }
 
     const rootUrl = `https://${category}.cnjxol.com`;

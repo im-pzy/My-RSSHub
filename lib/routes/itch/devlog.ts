@@ -1,6 +1,4 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
@@ -8,8 +6,9 @@ import { load } from 'cheerio';
 import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter';
 
 export const route: Route = {
     path: '/devlog/:user/:id',
@@ -38,7 +37,7 @@ async function handler(ctx) {
     const user = ctx.req.param('user') ?? '';
     const id = ctx.req.param('id') ?? '';
     if (!isValidHost(user)) {
-        throw new Error('Invalid user');
+        throw new InvalidParameterError('Invalid user');
     }
 
     const rootUrl = `https://${user}.itch.io/${id}/devlog`;

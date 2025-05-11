@@ -32,6 +32,7 @@ export const route: Route = {
     },
     name: '设计与建筑学院',
     maintainers: ['yikZero'],
+    url: 'www.design.zjut.edu.cn',
     handler,
     description: `| 学院新闻 | 公告通知 | 科研申报 | 科研成果 | 文件与资源 | 学术交流 |
 | -------- | -------- | -------- | -------- | -------- | -------- |
@@ -48,7 +49,8 @@ async function handler(ctx) {
     const $ = load(listResponse.data);
 
     const list = $("td[class='newstd'] .news2")
-        .map((index, item) => {
+        .toArray()
+        .map((item) => {
             item = $(item);
             const title = item.find('a').text();
 
@@ -68,8 +70,7 @@ async function handler(ctx) {
                 pubDate: parseDate(date),
                 link,
             };
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>

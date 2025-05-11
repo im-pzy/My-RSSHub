@@ -1,6 +1,8 @@
-import { Route } from '@/types';
+import { Route, ViewType } from '@/types';
 import got from '@/utils/got';
+import { config } from '@/config';
 import { parseDate } from '@/utils/parse-date';
+import ConfigNotFoundError from '@/errors/types/config-not-found';
 
 const titles = {
     total: '全站',
@@ -18,39 +20,106 @@ const titles = {
 
 export const route: Route = {
     path: '/hot/:category?',
-    categories: ['social-media'],
+    categories: ['social-media', 'popular'],
     example: '/zhihu/hot',
-    parameters: { category: '分类，见下表，默认为全站' },
+    view: ViewType.Articles,
+    parameters: {
+        category: {
+            description: '分类',
+            default: 'total',
+            options: [
+                {
+                    value: 'total',
+                    label: '全站',
+                },
+                {
+                    value: 'focus',
+                    label: '国际',
+                },
+                {
+                    value: 'science',
+                    label: '科学',
+                },
+                {
+                    value: 'car',
+                    label: '汽车',
+                },
+                {
+                    value: 'zvideo',
+                    label: '视频',
+                },
+                {
+                    value: 'fashion',
+                    label: '时尚',
+                },
+                {
+                    value: 'depth',
+                    label: '时事',
+                },
+                {
+                    value: 'digital',
+                    label: '数码',
+                },
+                {
+                    value: 'sport',
+                    label: '体育',
+                },
+                {
+                    value: 'school',
+                    label: '校园',
+                },
+                {
+                    value: 'film',
+                    label: '影视',
+                },
+            ],
+        },
+    },
     features: {
-        requireConfig: false,
+        requireConfig: [
+            {
+                name: 'ZHIHU_COOKIES',
+                description: '',
+            },
+        ],
         requirePuppeteer: false,
         antiCrawler: true,
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
     },
-    name: '知乎分类热榜',
-    maintainers: ['nczitzk'],
+    name: '知乎热榜',
+    maintainers: ['nczitzk', 'pseudoyu'],
     handler,
-    description: `| 全站  | 国际  | 科学    | 汽车 | 视频   | 时尚    | 时事  | 数码    | 体育  | 校园   | 影视 |
-  | ----- | ----- | ------- | ---- | ------ | ------- | ----- | ------- | ----- | ------ | ---- |
-  | total | focus | science | car  | zvideo | fashion | depth | digital | sport | school | film |`,
+    description: `::: warning
+  需要登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
+:::`,
 };
 
 async function handler(ctx) {
     const category = ctx.req.param('category') ?? 'total';
+    const cookie = config.zhihu.cookies;
+    if (cookie === undefined) {
+        throw new ConfigNotFoundError('缺少知乎用户登录后的 Cookie 值');
+    }
 
     const response = await got({
         method: 'get',
         url: `https://www.zhihu.com/api/v3/feed/topstory/hot-lists/${category}?limit=50`,
+        headers: {
+            Cookie: cookie,
+        },
     });
 
-    const items = response.data.data.map((item) => ({
-        link: `https://www.zhihu.com/question/${item.target.id}`,
-        title: item.target.title,
-        pubDate: parseDate(item.target.created * 1000),
-        description: item.target.excerpt ? `<p>${item.target.excerpt}</p>` : '',
-    }));
+    const items = response.data.data.map((item) => {
+        const questionId = item.target.url ? item.target.url.split('/').pop() : String(item.target.id);
+        return {
+            link: `https://www.zhihu.com/question/${questionId}`,
+            title: item.target.title,
+            pubDate: parseDate(item.target.created * 1000),
+            description: item.target.excerpt ? `<p>${item.target.excerpt}</p>` : '',
+        };
+    });
 
     return {
         title: `知乎热榜 - ${titles[category]}`,

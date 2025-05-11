@@ -1,13 +1,11 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -109,8 +107,7 @@ async function handler(ctx) {
                               content(
                                   content('div.video_info_item, div.lc-infos div')
                                       .toArray()
-                                      .filter((i) => /\d{4}-\d{2}-\d{2}/.test(content(i).text()))
-                                      .pop()
+                                      .findLast((i) => /\d{4}-\d{2}-\d{2}/.test(content(i).text()))
                               )
                                   .text()
                                   .split(/：/)

@@ -4,8 +4,8 @@ import parser from '@/utils/rss-parser';
 import { load } from 'cheerio';
 import got from '@/utils/got';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -72,7 +72,7 @@ const webFetch = (url) =>
         try {
             return webFetchCb(await got(url));
         } catch (error) {
-            if (error.name === 'HTTPError' && error.response.statusCode === 404) {
+            if ((error.name === 'HTTPError' || error.name === 'FetchError') && error.response.statusCode === 404) {
                 return '404';
             }
             throw error;
@@ -114,7 +114,7 @@ const tryFetch = async (category, topic) => {
 
 export const route: Route = {
     path: '/:category?/:topic?',
-    categories: ['new-media'],
+    categories: ['new-media', 'popular'],
     example: '/phoronix/linux/KDE',
     parameters: {
         category: 'Category',

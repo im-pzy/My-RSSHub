@@ -1,6 +1,4 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
@@ -8,7 +6,7 @@ import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import { rootUrl } from './utils';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 
 export const route: Route = {
     path: '/blog',
@@ -71,7 +69,7 @@ async function handler(ctx) {
         )
     );
 
-    return {
+    const ret = {
         title: $('title').text(),
         link: rootUrl + '/blog',
         description: $('meta[name="description"]').attr('content'),
@@ -79,11 +77,6 @@ async function handler(ctx) {
         item: items,
     };
 
-    ctx.set('json', {
-        title: $('title').text(),
-        link: rootUrl + '/blog',
-        description: $('meta[name="description"]').attr('content'),
-        language: 'en-US',
-        item: items,
-    });
+    ctx.set('json', ret);
+    return ret;
 }

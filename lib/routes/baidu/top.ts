@@ -1,11 +1,9 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import got from '@/utils/got';
 import { load } from 'cheerio';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 
 export const route: Route = {
     path: '/top/:board?',
@@ -24,8 +22,8 @@ export const route: Route = {
     maintainers: ['xyqfer'],
     handler,
     description: `| 热搜榜   | 小说榜 | 电影榜 | 电视剧榜 | 汽车榜 | 游戏榜 |
-  | -------- | ------ | ------ | -------- | ------ | ------ |
-  | realtime | novel  | movie  | teleplay | car    | game   |`,
+| -------- | ------ | ------ | -------- | ------ | ------ |
+| realtime | novel  | movie  | teleplay | car    | game   |`,
 };
 
 async function handler(ctx) {

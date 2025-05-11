@@ -1,11 +1,9 @@
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
-
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import { config } from '@/config';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
+import ConfigNotFoundError from '@/errors/types/config-not-found';
 
 const baseUrl = 'https://www.instagram.com';
 const COOKIE_URL = 'https://instagram.com';
@@ -59,7 +57,7 @@ const getUserInfo = async (username, cookieJar, cache) => {
                 },
             });
             if (response.url.includes('/accounts/login/')) {
-                throw new Error('Invalid cookie');
+                throw new ConfigNotFoundError('Invalid cookie');
             }
 
             webProfileInfo = response.data.data.user;
@@ -69,7 +67,7 @@ const getUserInfo = async (username, cookieJar, cache) => {
             await cache.set(`instagram:userInfo:${id}`, webProfileInfo);
         } catch (error) {
             if (error.message.includes("Cookie not in this host's domain")) {
-                throw new Error('Invalid cookie');
+                throw new ConfigNotFoundError('Invalid cookie');
             }
             throw error;
         }
@@ -97,7 +95,7 @@ const getUserFeedItems = (id, username, cookieJar, cache) =>
                 },
             });
             if (response.url.includes('/accounts/login/')) {
-                throw new Error(`Invalid cookie.
+                throw new ConfigNotFoundError(`Invalid cookie.
                 Please also check if your account is being blocked by Instagram.`);
             }
 

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import configUtils, { transElemText, replaceParams, getProp } from '@/utils/common-config';
-import nock from 'nock';
 
 describe('index', () => {
     it('transElemText', () => {
@@ -40,23 +39,6 @@ describe('index', () => {
     });
 
     it('buildData', async () => {
-        nock('http://rsshub.test')
-            .get('/buildData')
-            .reply(() => [
-                200,
-                `<div class="content">
-                <ul>
-                    <li>
-                        <a href="/1">1</a>
-                        <div class="description">RSSHub1</div>
-                    </li>
-                    <li>
-                        <a href="/2">2</a>
-                        <div class="description">RSSHub2</div>
-                    </li>
-                </ul>
-            </div>`,
-            ]);
         const data = await configUtils({
             link: 'http://rsshub.test/buildData',
             url: 'http://rsshub.test/buildData',
@@ -69,6 +51,7 @@ describe('index', () => {
                 title: `$('a').text() + ' - %title%'`,
                 link: `$('a').attr('href')`,
                 description: `$('.description').html()`,
+                pubDate: `timezone(parseDate($('.date').text(), 'YYYY-MM-DD'), 0)`,
             },
         });
 
@@ -80,14 +63,14 @@ describe('index', () => {
                     description: 'RSSHub1',
                     guid: undefined,
                     link: '/1',
-                    pubDate: undefined,
+                    pubDate: new Date('2025-01-01T00:00:00Z'),
                     title: '1 - buildData',
                 },
                 {
                     description: 'RSSHub2',
                     guid: undefined,
                     link: '/2',
-                    pubDate: undefined,
+                    pubDate: new Date('2025-01-02T00:00:00Z'),
                     title: '2 - buildData',
                 },
             ],

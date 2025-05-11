@@ -1,12 +1,10 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { load } from 'cheerio';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -52,7 +50,7 @@ async function handler(ctx) {
 
     const data = response.data;
     const $ = load(data);
-    const list = $('.simple-topic').get();
+    const list = $('.simple-topic').toArray();
     const item = await Promise.all(
         list.map(async (item) => {
             const $ = load(item);

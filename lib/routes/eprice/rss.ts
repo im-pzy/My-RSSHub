@@ -1,6 +1,4 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
@@ -8,7 +6,8 @@ import parser from '@/utils/rss-parser';
 import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
+import InvalidParameterError from '@/errors/types/invalid-parameter';
 const allowRegion = new Set(['tw', 'hk']);
 
 export const route: Route = {
@@ -29,15 +28,15 @@ export const route: Route = {
     handler,
     description: `地区：
 
-  | hk   | tw   |
-  | ---- | ---- |
-  | 香港 | 台湾 |`,
+| hk   | tw   |
+| ---- | ---- |
+| 香港 | 台湾 |`,
 };
 
 async function handler(ctx) {
     const region = ctx.req.param('region') ?? 'tw';
     if (!allowRegion.has(region)) {
-        throw new Error('Invalid region');
+        throw new InvalidParameterError('Invalid region');
     }
 
     const feed = await parser.parseURL(`https://www.eprice.com.${region}/news/rss.xml`);
@@ -107,7 +106,7 @@ async function handler(ctx) {
         )
     );
 
-    return {
+    const ret = {
         title: feed.title,
         link: feed.link,
         description: feed.description,
@@ -116,12 +115,6 @@ async function handler(ctx) {
         language: feed.language,
     };
 
-    ctx.set('json', {
-        title: feed.title,
-        link: feed.link,
-        description: feed.description,
-        item: items,
-        image: feed.image.url,
-        language: feed.language,
-    });
+    ctx.set('json', ret);
+    return ret;
 }

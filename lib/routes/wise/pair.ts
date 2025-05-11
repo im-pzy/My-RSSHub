@@ -1,15 +1,13 @@
 import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
 
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 dayjs.extend(customParseFormat);
 import { art } from '@/utils/render';
-import * as path from 'node:path';
+import path from 'node:path';
 const renderDesc = (content) => art(path.join(__dirname, 'templates/description.art'), content);
 
 export const route: Route = {

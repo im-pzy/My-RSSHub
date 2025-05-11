@@ -2,7 +2,7 @@ import got from '@/utils/got';
 import { toTitleCase } from '@/utils/common-utils';
 import { load } from 'cheerio';
 
-export default async (ctx) => {
+const handler = async (ctx) => {
     let type = 'new-releases';
     let title = 'New Releases';
 
@@ -28,7 +28,7 @@ export default async (ctx) => {
     const data = response.body;
 
     const $ = load(data);
-    const list = $('.list_products > li').get().slice(0, 10);
+    const list = $('.list_products > li').toArray().slice(0, 10);
 
     const result = list.map((item) => {
         const $ = load(item);
@@ -51,3 +51,4 @@ export default async (ctx) => {
         })),
     };
 };
+export default handler;
